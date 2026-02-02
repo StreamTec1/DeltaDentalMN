@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delta Dental of Minnesota - Chat Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 420px;
+            height: 600px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #00534C 0%, #007A6F 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-header-icon {
+            width: 44px;
+            height: 44px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-header-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: #00534C;
+        }
+
+        .chat-header-text h1 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .chat-header-text p {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #fafbfc;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.bot {
+            background: white;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #00534C 0%, #007A6F 100%);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message a {
+            color: #00796B;
+            text-decoration: underline;
+        }
+
+        .message.user a {
+            color: #a5d6d2;
+        }
+
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .quick-reply {
+            background: #e8f5f3;
+            color: #00534C;
+            border: 1px solid #b2dfdb;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-reply:hover {
+            background: #00534C;
+            color: white;
+            border-color: #00534C;
+        }
+
+        .chat-input-area {
+            padding: 16px;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: #00534C;
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #00534C 0%, #007A6F 100%);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,83,76,0.3);
+        }
+
+        .send-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #00534C;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Lead Capture Form */
+        .lead-form {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            max-width: 85%;
+            align-self: flex-start;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .lead-form h3 {
+            color: #00534C;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .lead-form input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        .lead-form input:focus {
+            border-color: #00534C;
+        }
+
+        .lead-form button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #00534C 0%, #007A6F 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .lead-form button:hover {
+            opacity: 0.9;
+        }
+
+        .powered-by {
+            text-align: center;
+            padding: 8px;
+            font-size: 11px;
+            color: #999;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="chat-header-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+            </div>
+            <div class="chat-header-text">
+                <h1>Delta Dental of Minnesota</h1>
+                <p>Your Smile Assistant • Online Now</p>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be inserted here -->
+        </div>
+        
+        <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type your question..." />
+                <button class="send-btn" id="sendBtn">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="powered-by">Powered by AI Assistant</div>
+    </div>
+
+    <script>
+        // Knowledge Base
+        const knowledgeBase = {
+            greetings: ["hi", "hello", "hey", "good morning", "good afternoon"],
+            
+            responses: {
+                greeting: "Hi there! 👋 I'm your Delta Dental of Minnesota assistant. I can help you with finding a dentist, understanding your coverage, or getting plan information. What can I help you with today?",
+                
+                findDentist: "You can find an in-network dentist using our Find a Dentist tool at deltadentalmn.org/find-a-dentist. You can search by location, specialty, and hours. Seeing an in-network dentist means lower out-of-pocket costs!",
+                
+                coverage: "To check your coverage details, log into the Member Portal at deltadentalmn.org/myaccount. There you can view your benefits, deductibles, claims history, and digital ID card. Need help logging in?",
+                
+                plans: "Delta Dental of Minnesota offers individual and family plans (Plans A-D), small business plans (2-100 employees), and employer group plans. We also offer DeltaVision® to bundle dental and vision benefits. Would you like details on a specific plan type?",
+                
+                contact: "Here's how to reach us:\n\n• Individual/Family Plans: 1-855-643-3582\n• Employer Plans: 1-800-448-3815\n• Small Business: 1-800-906-5250\n\nHours: 7am-7pm CT, Monday-Friday",
+                
+                claims: "Claims can be submitted by your dentist directly, or you can mail them to: Delta Dental of Minnesota, PO Box 9120, Farmington Hills, MI 48333. Check claim status anytime in the Member Portal.",
+                
+                networks: "We have two main networks:\n\n• Delta Dental Premier® - Our largest network with 2,800+ dentists in MN\n• Delta Dental PPO™ - Smaller network with greater savings\n\nBoth networks give you access to 154,000+ providers nationwide.",
+                
+                virtual: "Yes! We offer virtual dental visits through Teledentistry.com. It's great when you can't see your regular dentist or need after-hours care. Note: virtual visits count as one oral examination under your plan.",
+                
+                idCard: "Digital ID cards are available in the Member Portal and mobile app. Your dental office can also verify your coverage directly through our system using your subscriber ID.",
+                
+                vision: "DeltaVision® plans are available when bundled with our Individual and Family dental plans. Adding vision gives you a more complete benefit package. Would you like more details?",
+                
+                default: "I'd be happy to help with that! For the most accurate information about your specific situation, I recommend:\n\n• Logging into the Member Portal\n• Calling us at 1-800-448-3815\n\nIs there something else I can help you with?"
+            },
+            
+            keywords: {
+                findDentist: ["dentist", "find", "search", "doctor", "provider", "network", "near me", "location"],
+                coverage: ["coverage", "benefits", "covered", "deductible", "maximum", "eligible", "what's covered"],
+                plans: ["plan", "plans", "enroll", "sign up", "individual", "family", "business", "employer"],
+                contact: ["contact", "phone", "call", "number", "email", "reach", "talk to someone"],
+                claims: ["claim", "claims", "submit", "reimbursement", "form"],
+                networks: ["network", "premier", "ppo", "in-network", "out of network"],
+                virtual: ["virtual", "teledentistry", "online", "video", "telehealth"],
+                idCard: ["id card", "card", "member id", "identification"],
+                vision: ["vision", "eye", "deltavision", "glasses", "contacts"]
+            }
+        };
+
+        let leadCaptured = false;
+        let messageCount = 0;
+
+        function addMessage(text, isUser = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            messageDiv.innerHTML = text.replace(/\n/g, '<br>');
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addQuickReplies(replies) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const repliesDiv = document.createElement('div');
+            repliesDiv.className = 'quick-replies';
+            replies.forEach(reply => {
+                const btn = document.createElement('button');
+                btn.className = 'quick-reply';
+                btn.textContent = reply;
+                btn.onclick = () => {
+                    repliesDiv.remove();
+                    handleUserInput(reply);
+                };
+                repliesDiv.appendChild(btn);
+            });
+            messagesContainer.appendChild(repliesDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTyping() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = '<span></span><span></span><span></span>';
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        function showLeadForm() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const formDiv = document.createElement('div');
+            formDiv.className = 'lead-form';
+            formDiv.innerHTML = `
+                <h3>📋 Get personalized assistance</h3>
+                <input type="text" id="leadName" placeholder="Your name" />
+                <input type="email" id="leadEmail" placeholder="Email address" />
+                <input type="tel" id="leadPhone" placeholder="Phone (optional)" />
+                <button onclick="submitLead()">Get Help</button>
+            `;
+            messagesContainer.appendChild(formDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function submitLead() {
+            const name = document.getElementById('leadName').value;
+            const email = document.getElementById('leadEmail').value;
+            const phone = document.getElementById('leadPhone').value;
+            
+            if (name && email) {
+                leadCaptured = true;
+                console.log('Lead captured:', { name, email, phone });
+                
+                const forms = document.querySelectorAll('.lead-form');
+                forms.forEach(f => f.remove());
+                
+                addMessage(`Thanks, ${name}! 🎉 A Delta Dental representative will be in touch soon. In the meantime, I'm here to answer any questions!`);
+                addQuickReplies(["Find a dentist", "Check my coverage", "Contact info"]);
+            }
+        }
+
+        function getResponse(input) {
+            const lower = input.toLowerCase();
+            
+            // Check greetings
+            if (knowledgeBase.greetings.some(g => lower.includes(g))) {
+                return { response: knowledgeBase.responses.greeting, quickReplies: ["Find a dentist", "View my benefits", "Get a quote"] };
+            }
+            
+            // Check keywords
+            for (const [key, keywords] of Object.entries(knowledgeBase.keywords)) {
+                if (keywords.some(kw => lower.includes(kw))) {
+                    return { response: knowledgeBase.responses[key], quickReplies: null };
+                }
+            }
+            
+            return { response: knowledgeBase.responses.default, quickReplies: ["Find a dentist", "Contact us", "View plans"] };
+        }
+
+        function handleUserInput(text) {
+            if (!text.trim()) return;
+            
+            messageCount++;
+            addMessage(text, true);
+            showTyping();
+            
+            setTimeout(() => {
+                hideTyping();
+                const { response, quickReplies } = getResponse(text);
+                addMessage(response);
+                
+                if (quickReplies) {
+                    addQuickReplies(quickReplies);
+                }
+                
+                // Show lead form after 3 messages if not captured
+                if (messageCount === 3 && !leadCaptured) {
+                    setTimeout(() => {
+                        addMessage("I want to make sure you get the best help possible!");
+                        showLeadForm();
+                    }, 1000);
+                }
+            }, 800 + Math.random() * 400);
+        }
+
+        // Event Listeners
+        document.getElementById('sendBtn').addEventListener('click', () => {
+            const input = document.getElementById('chatInput');
+            handleUserInput(input.value);
+            input.value = '';
+        });
+
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const input = document.getElementById('chatInput');
+                handleUserInput(input.value);
+                input.value = '';
+            }
+        });
+
+        // Initial greeting
+        setTimeout(() => {
+            addMessage(knowledgeBase.responses.greeting);
+            addQuickReplies(["Find a dentist", "View my benefits", "Get a quote"]);
+        }, 500);
+    </script>
+</body>
+</html>
